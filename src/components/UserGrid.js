@@ -1,18 +1,19 @@
 import React from "react";
-import './UserGrid.css';
+import "./UserGrid.css"; 
 
-function UserGrid({ users, onUpdate, onDelete }) {
+// UserGrid functional component to display the list of users
+const UserGrid = ({ users, handleUpdate, handleDelete }) => {
   return (
     <div className="user-grid">
       <h3>Submitted Users:</h3>
       {users.length > 0 ? (
-        <table >
+        <table>
           <thead>
             <tr>
               <th>Name</th>
               <th>Email</th>
               <th>Age</th>
-              <th>Actions</th> {/* Actions column */}
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -22,13 +23,11 @@ function UserGrid({ users, onUpdate, onDelete }) {
                 <td>{user.email}</td>
                 <td>{user.age}</td>
                 <td>
-                  {/* Update Button */}
-                  <button onClick={() => onUpdate(user)}>
-                  <i class="bi bi-pencil-square"></i>
+                  <button onClick={() => handleUpdate(user)}>
+                    <i className="bi bi-pencil-square"></i>
                   </button>
-                  {/* Delete Button */}
-                  <button onClick={() => onDelete(user)}>
-                  <i class="bi bi-trash3-fill"></i>
+                  <button onClick={() => handleDelete(user)}>
+                    <i className="bi bi-trash3-fill"></i>
                   </button>
                 </td>
               </tr>
@@ -40,6 +39,6 @@ function UserGrid({ users, onUpdate, onDelete }) {
       )}
     </div>
   );
-}
+};
 
-export default UserGrid;
+export default UserGrid;  // Export UserGrid component
