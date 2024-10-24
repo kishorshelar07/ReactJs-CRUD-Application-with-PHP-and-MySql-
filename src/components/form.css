@@ -83,7 +83,7 @@ table th, table td {
 }
 
 table th {
-  background-color: #007bff;
+  background-color: #8b54f9;
   color: white;
 }
 
@@ -108,45 +108,15 @@ table button:hover {
   color: #0056b3;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-  form input, form button {
-    width: 100%;
-  }
 
-  table, thead, tbody, th, td, tr {
-    display: block;
-    width: 100%;
-  }
-
-  table th {
-    display: none; /* Hide table headers on small screens */
-  }
-
-  table tr {
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-    background-color: white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  table td {
-    display: block;
-    font-size: 14px;
-    text-align: right;
-    position: relative;
-    padding-left: 50%;
-  }
-
-  table td::before {
-    content: attr(data-label);
-    position: absolute;
-    left: 0;
-    width: 50%;
-    padding-left: 10px;
-    font-weight: bold;
-    text-align: left;
-  }
+.search{
+  margin-left: 70%;
+}
+.search input {
+  height: 40px;
+  width: 300px;
+}
+h3{
+  margin-top: 40px;
+  text-align: center;
 }
