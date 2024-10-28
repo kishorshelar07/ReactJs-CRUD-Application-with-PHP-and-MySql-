@@ -1,149 +1,211 @@
-import React, { useState, useEffect } from "react"; // Import necessary React hooks (useState, useEffect)
-import axios from "axios"; // Import axios for making HTTP requests
-import "./form.css"; // Import CSS styles for the form
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import "./form.css";
 
 function UserForm() {
-  // useState hook for managing form data and user list
+  // Initialize state for form data, users list, search input, and editing mode
   const [form_data, set_form_data] = useState({
-    name: "",
-    email: "",
-    age: "",
-    usr_no: null, // This is used to track if the user is being edited (null means new user)
+    name: "",       // Stores the user's name
+    email: "",      // Stores the user's email
+    age: "",        // Stores the user's age
+    usr_no: null,   // Tracks user ID for editing; null for new entries
   });
 
-  const [users, setUsers] = useState([]); // State to hold fetched users
-  const [searchInput, setSearchInput] = useState(""); // State for search input
+  const [users, setUsers] = useState([]);              // Stores the list of all users
+  const [searchInput, setSearchInput] = useState("");   // Stores the search input text
+  const [isEditing, setIsEditing] = useState(false);    // Tracks if the form is in "Edit" mode
 
-  // useEffect hook to fetch users from the server (with optional search query)
+  // Fetches users whenever searchInput changes (i.e., whenever user searches)
   useEffect(() => {
-    // If searchInput exists, append it as a query parameter
-    const searchQuery = searchInput ? `?search=${searchInput}` : "";
-    const url = `http://localhost/server4react/index.php${searchQuery}`; // URL for fetching users
+    const searchQuery = searchInput ? `?search=${searchInput}` : "";  // Adds search query if there's input
+    const url = `http://localhost/server4react/index.php${searchQuery}`;  // Construct URL with query
 
-    // Fetch users from the server using axios
+    // Send GET request to fetch user data
     axios
       .get(url)
       .then((response) => {
-        const jsonResponse = response.data;
-        console.log("Fetched User Data:", jsonResponse); // Log fetched user data
+        const jsonResponse = response.data;             // Parse response data
+        console.log("Fetched User Data:", jsonResponse);
 
-        if (jsonResponse && jsonResponse.data) {
-          setUsers(jsonResponse.data); // Set the users state with fetched data
+        if (jsonResponse && jsonResponse.data) {        // If data exists, update users state
+          setUsers(jsonResponse.data);
         }
       })
       .catch((error) => {
-        console.error("Error fetching users:", error); // Handle any errors during the fetch
+        console.error("Error fetching users:", error);   // Log any errors during fetch
       });
-  }, [searchInput]); // This effect runs again when the searchInput changes
+  }, [searchInput]);  // Dependency array with searchInput, re-runs on change
 
-  // Handle search input change
+  // Update search input state as user types in search box
   const handleSearch = (e) => {
-    setSearchInput(e.target.value); // Update searchInput state on change
+    setSearchInput(e.target.value);
   };
 
-  // Handle form field changes
+  // Handle input change for form fields and update form data
   const handleChange = (e) => {
-    const { name, value } = e.target; // Destructure name and value from the input
+    const { name, value } = e.target;
     set_form_data((form_data) => ({
-      ...form_data, // Keep the previous form data
-      [name]: value, // Update the specific field being changed
+      ...form_data,
+      [name]: value,        // Update only the field that changed
     }));
   };
 
-  // Handle form submission (Create/Update user)
+  // Submit form data to add or update a user
   const handleSubmit = (e) => {
-    e.preventDefault(); // Prevent the default form submission
+    e.preventDefault();                               // Prevent page refresh on form submit
+    const requestMethod = form_data.usr_no ? "PUT" : "POST";  // Decide if it's an add or update
 
-    const requestMethod = form_data.usr_no ? "PUT" : "POST"; // Decide if it's a create (POST) or update (PUT)
-
-    // Send form data to the server via axios
+    // Send request to server with form data
     axios({
       method: requestMethod,
-      url: "http://localhost/server4react/index.php", // URL for submitting form data
-      data: form_data, // Send the form data in the request
+      url: "http://localhost/server4react/index.php",
+      data: form_data,
     })
       .then((response) => {
-        const resp_data = JSON.parse(JSON.stringify(response.data)).data; // Parse response
+        const resp_data = JSON.parse(JSON.stringify(response.data)).data;  // Parse response
 
-        if (resp_data) {
-          if (requestMethod === "POST") {
-            // If it's a new user (POST), add the new user to the users array
+        if (resp_data) {                           // If response data is valid
+          if (requestMethod === "POST") {          // Add user to users list if it's a POST
             setUsers((users) => [...users, resp_data]);
-          } else if (requestMethod === "PUT") {
-            // If it's an update (PUT), update the existing user in the array
+          } else if (requestMethod === "PUT") {    // Update user if it's a PUT
             setUsers((users) =>
               users.map((u) => (u.usr_no === form_data.usr_no ? resp_data : u))
             );
           }
 
-          // Reset the form data after submission
+          // Reset form to blank state after submit
           set_form_data({
             name: "",
             email: "",
             age: "",
-            usr_no: null, // Reset usr_no to null after the user is created/updated
+            usr_no: null,
           });
+          setIsEditing(false);                     // Set mode back to "Add"
         }
       })
       .catch((error) => {
-        console.error("Error submitting the form:", error); // Handle submission error
+        console.error("Error submitting the form:", error);  // Log submission errors
       });
   };
 
-  // Handle update button click (pre-fill the form with user data)
+  // Set form data with user details to edit and switch to edit mode
   const handleUpdate = (user) => {
     set_form_data({
-      name: user.usr_name, // Set the form fields with user data to be updated
+      name: user.usr_name,
       email: user.usr_email,
       age: user.usr_age,
-      usr_no: user.usr_no, // usr_no is required to identify the user being updated
+      usr_no: user.usr_no,
     });
+    setIsEditing(true);                            // Switch to editing mode
   };
 
-  // Handle delete button click (delete user)
+  // Delete a user with confirmation dialog
   const handleDelete = (user) => {
-    // Show a confirmation dialog before deleting
-    if (window.confirm(`Are you sure you want to delete the user: ${user.name}?`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete the user: ${user.usr_name}?`
+      )
+    ) {
       axios
-        .delete(`http://localhost/server4react/index.php?usr_no=${user.usr_no}`) // Send delete request with user ID
+        .delete(`http://localhost/server4react/index.php?usr_no=${user.usr_no}`) // DELETE request to server
         .then(() => {
-          setUsers((prevUsers) => prevUsers.filter((u) => u.usr_no !== user.usr_no)); // Remove the deleted user from the list
-          console.log("User Deleted:", user); // Log deletion
+          setUsers((prevUsers) =>
+            prevUsers.filter((u) => u.usr_no !== user.usr_no)   // Filter out deleted user from list
+          );
+          console.log("User Deleted:", user);                  // Log deletion success
         })
         .catch((error) => {
-          console.error("Error deleting user:", error); // Handle deletion error
+          console.error("Error deleting user:", error);         // Log deletion errors
         });
     }
   };
 
+
   return (
     <div>
-      {/* User form */}
-      <form onSubmit={handleSubmit}>
-        <h2>User Form</h2>
-        <div>
-          <label>Name:</label>
-          <input type="text"  name="name" value={form_data.name}  onChange={handleChange} required />
+      <div
+        className="modal fade"
+        id="exampleModal"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5" id="exampleModalLabel">
+                {isEditing ? "Update User" : "Add User"}
+              </h1>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+                onClick={() =>
+                  set_form_data({ name: "", email: "", age: "", usr_no: null })
+                }
+              ></button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleSubmit}>
+                <div>
+                  <label>Name:</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={form_data.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <label>Email:</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={form_data.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <label>Age:</label>
+                  <input
+                    type="number"
+                    name="age"
+                    value={form_data.age}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <button type="submit">{isEditing ? "Update" : "Submit"}</button>
+              </form>
+            </div>
+          </div>
         </div>
-        <div>
-          <label>Email:</label>
-          <input  type="email" name="email" value={form_data.email}  onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Age:</label>
-          <input type="number" name="age" value={form_data.age} onChange={handleChange} required />
-        </div>
-        <button type="submit">{form_data.usr_no ? "Update" : "Submit"}</button> {/* Change button text based on form mode */}
-      </form>
+      </div>
 
-      {/* Display submitted users in a table */}
-      <h3>Submitted Users:</h3>
-      
-      {/* Search input for searching users */}
+      <button
+        type="button"
+        className="btn btn-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#exampleModal"
+        onClick={() => {
+          set_form_data({ name: "", email: "", age: "", usr_no: null });
+          setIsEditing(false);
+        }}
+      >
+        Add User
+      </button>
+
       <div className="search">
- 
-        <input type="text" placeholder="Search by name or email" value={searchInput} onChange={handleSearch} />
-      </div><hr/>
+        <input
+          type="text"
+          placeholder="Search by name, email or age"
+          value={searchInput}
+          onChange={handleSearch}
+        />
+      </div>
+      <hr />
 
       {users.length > 0 ? (
         <table>
@@ -153,29 +215,37 @@ function UserForm() {
               <th>Name</th>
               <th>Email</th>
               <th>Age</th>
-              <th>Actions</th> 
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {/* Iterate through users array and display each user */}
             {users.map((user, index) => (
               <tr key={index}>
-                <td>{user.usr_no}</td> 
-                <td>{user.usr_name}</td> 
-                <td>{user.usr_email}</td> 
-                <td>{user.usr_age}</td> 
+                <td>{user.usr_no}</td>
+                <td>{user.usr_name}</td>
+                <td>{user.usr_email}</td>
+                <td>{user.usr_age}</td>
                 <td>
-                  {/* Update button (calls handleUpdate to pre-fill the form) */}
-                  <button onClick={() => handleUpdate(user)}><i className="bi bi-pencil-square"></i></button>
-                  {/* Delete button (calls handleDelete to remove user) */}
-                  <button onClick={() => handleDelete(user)}><i className="bi bi-trash3-fill"></i></button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#exampleModal"
+                    onClick={() => handleUpdate(user)} // Set the form data for editing
+                  >
+                    <i className="bi bi-pencil-square"></i>
+                  </button>
+
+                  <button onClick={() => handleDelete(user)}>
+                    <i className="bi bi-trash3-fill"></i>
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
-        <p>No users found.</p> 
+        <p>No users found.</p>
       )}
     </div>
   );
